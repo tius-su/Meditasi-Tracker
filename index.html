@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🕊️ Spiritual Tracker</title>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f4f7f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #4e735f;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    font-size: 1.5em;
+    letter-spacing: 1px;
+  }
+  .container {
+    max-width: 600px;
+    margin: 25px auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    padding: 20px;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+    font-size: 1em;
+  }
+  button {
+    width: 100%;
+    margin-top: 15px;
+    background: #4e735f;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  button:hover {
+    background: #3b5a4a;
+  }
+  .small-btn {
+    width: 48%;
+    display: inline-block;
+  }
+  .result {
+    margin-top: 20px;
+    background: #e9f5ec;
+    padding: 15px;
+    border-left: 5px solid #4e735f;
+    border-radius: 8px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+  .progress {
+    height: 100%;
+    background: #4e735f;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .activity-list {
+    margin-top: 25px;
+  }
+  .activity-card {
+    background: #f0f9f4;
+    border: 1px solid #c8e2d3;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<header>📿 Spiritual Tracker</header>
+
+<div class="container">
+  <h2>Tambah Kegiatan Baru</h2>
+  <label>Nama Unik</label>
+  <input id="idName" type="text" placeholder="Contoh: Puasa40Hari_1">
+
+  <label>Nama Kegiatan</label>
+  <input id="name" type="text" placeholder="Contoh: Puasa 40 Hari">
+
+  <label>Jenis</label>
+  <select id="type">
+    <option>Puasa</option>
+    <option>Meditasi</option>
+    <option>Disiplin Lain</option>
+  </select>
+
+  <label>Tanggal Mulai</label>
+  <input id="startDate" type="date">
+
+  <label>Durasi (hari)</label>
+  <input id="duration" type="number" placeholder="Contoh: 40">
+
+  <label>Mantra / Afirmasi</label>
+  <textarea id="mantra" rows="2" placeholder="Tulis mantra pribadi di sini..."></textarea>
+
+  <label>Catatan</label>
+  <textarea id="notes" rows="3" placeholder="Tulis catatan harian atau niat spiritual..."></textarea>
+
+  <button onclick="saveActivity()">💾 Simpan Kegiatan</button>
+  <button class="small-btn" onclick="resetAll()">🧹 Reset Semua</button>
+
+  <div class="activity-list" id="activityList"></div>
+</div>
+
+<script>
+  // Load data dari localStorage
+  let activities = JSON.parse(localStorage.getItem('activities')) || [];
+
+  function saveActivity() {
+    const idName = document.getElementById('idName').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const type = document.getElementById('type').value;
+    const startDateValue = document.getElementById('startDate').value;
+    const duration = parseInt(document.getElementById('duration').value);
+    const notes = document.getElementById('notes').value;
+    const mantra = document.getElementById('mantra').value;
+
+    if (!idName || !name || !startDateValue || !duration) {
+      alert('Harap isi semua kolom penting!');
+      return;
+    }
+
+    const startDate = new Date(startDateValue);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + duration - 1);
+
+    const today = new Date();
+    const daysPassed = Math.max(Math.floor((today - startDate) / (1000*60*60*24)) + 1, 0);
+    const progress = Math.min((daysPassed / duration) * 100, 100);
+
+    const activity = {
+      idName, name, type, startDate: startDateValue,
+      duration, endDate: endDate.toISOString().split('T')[0],
+      notes, mantra, daysPassed, progress
+    };
+
+    // Cek apakah idName sudah ada (update)
+    const existingIndex = activities.findIndex(a => a.idName === idName);
+    if (existingIndex >= 0) {
+      activities[existingIndex] = activity;
+    } else {
+      activities.push(activity);
+    }
+
+    localStorage.setItem('activities', JSON.stringify(activities));
+    alert('✅ Kegiatan berhasil disimpan!');
+    renderActivities();
+  }
+
+  function renderActivities() {
+    const list = document.getElementById('activityList');
+    list.innerHTML = '<h3>📜 Daftar Kegiatan</h3>';
+    if (activities.length === 0) {
+      list.innerHTML += '<p>Belum ada kegiatan tersimpan.</p>';
+      return;
+    }
+    activities.forEach(a => {
+      list.innerHTML += `
+        <div class="activity-card">
+          <b>${a.name}</b> (${a.type})<br>
+          <small>ID: ${a.idName}</small><br>
+          Mulai: ${a.startDate} | Selesai: ${a.endDate}<br>
+          Hari ke: ${a.daysPassed} dari ${a.duration}<br>
+          <div class="progress-bar"><div class="progress" style="width:${a.progress}%;"></div></div>
+          <b>Mantra:</b> ${a.mantra || '-'}<br>
+          <b>Catatan:</b> ${a.notes || '-'}<br>
+          <button onclick="shareActivity('${a.idName}')">📤 Bagikan via WhatsApp</button>
+        </div>
+      `;
+    });
+  }
+
+  function shareActivity(idName) {
+    const a = activities.find(x => x.idName === idName);
+    if (!a) return alert('Data tidak ditemukan.');
+    const text = 
+`🕊️ *Spiritual Tracker*
+Nama: ${a.name}
+Jenis: ${a.type}
+Mulai: ${a.startDate}
+Selesai: ${a.endDate}
+Hari ke: ${a.daysPassed} dari ${a.duration}
+Mantra: ${a.mantra || '-'}
+Catatan: ${a.notes || '-'}
+
+#SpiritualJourney`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
+  function resetAll() {
+    if (confirm('Yakin ingin menghapus semua kegiatan?')) {
+      localStorage.removeItem('activities');
+      activities = [];
+      renderActivities();
+    }
+  }
+
+  // Tampilkan daftar awal
+  renderActivities();
+</script>
+</body>
+</html>
